@@ -36,12 +36,18 @@ class HomePageController extends GetxController {
   geoLocation() async {
     Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high);
-    // Perform reverse geocoding to get address details
+
     List<Placemark> placemarks =
-        await placemarkFromCoordinates(position.latitude, position.longitude);
+        await placemarkFromCoordinates(double.parse(position.latitude.toStringAsFixed(2)), double.parse(position.longitude.toStringAsFixed(2)));
     cityName.value = placemarks[0].locality.toString().toLowerCase();
     print("The value of the cityName.value is $cityName");
     print("The location is got $placemarks");
     update();
   }
+
+  String capitalizeFirstLetter(String input) {
+    if (input.isEmpty) return input; // Handle empty string
+    return input[0].toUpperCase() + input.substring(1);
+  }
+
 }
