@@ -78,8 +78,8 @@ class HomePageController extends GetxController {
     print("The location is got $placemarks");
     hasLocalData.value = await appSharedPreference.hasWeatherData();
     if (networkController.internetAvailable.value) {
-      fetchData();
       cityName.value = placemarks[0].locality.toString().toLowerCase();
+      fetchData();
       appSharedPreference.saveCityName(cityNameValue: cityName.value);
     } else {
       if (hasLocalData.value) {
