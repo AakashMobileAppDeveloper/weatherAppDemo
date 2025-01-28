@@ -1,27 +1,43 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:weather_demo_app/utils/appColor.dart';
 import 'package:weather_demo_app/utils/network_conectivity_helper.dart';
 import 'package:weather_demo_app/utils/shared_preference.dart';
 import 'package:weather_demo_app/utils/weather_data_model.dart';
 
 class HomePageController extends GetxController {
-  RxString cityName = "".obs;
+
   RxBool isLocationDenied = false.obs;
-  RxInt deniedCount = 0.obs;
-  RxString temperature = "metric".obs;
-  WeatherDataModel? weatherDataModel;
-  Days? currentDay;
-  RxList daysList = [].obs;
-  RxString todayTemp = "".obs;
   RxBool isLoading = false.obs;
-  RxList afterCurrentHours = [].obs;
-  RxString degreeMeasurement = "toFahrenheit".obs;
   RxBool noDataFound = true.obs;
   RxBool hasLocalData = false.obs;
+
+  RxString cityName = "".obs;
+  RxString temperature = "metric".obs;
+  RxString degreeMeasurement = "toFahrenheit".obs;
+  RxString todayTemp = "".obs;
+
+  RxList daysList = [].obs;
+  RxList afterCurrentHours = [].obs;
+  List<String> data = [
+    "chennai",
+    "coimbatore",
+    "madurai",
+    "tiruchirappalli",
+    "cuddalore",
+    "bangalore",
+    "puducherry",
+  ];
+
+  RxInt deniedCount = 0.obs;
+  WeatherDataModel? weatherDataModel;
+  Days? currentDay;
   AppSharedPreference appSharedPreference = AppSharedPreference();
   var networkController = Get.put(CheckingInternetConnectivity());
 
@@ -57,26 +73,73 @@ class HomePageController extends GetxController {
     List<Placemark> placemarks = await placemarkFromCoordinates(
         double.parse(position.latitude.toStringAsFixed(2)),
         double.parse(position.longitude.toStringAsFixed(2)));
-    cityName.value = placemarks[0].locality.toString().toLowerCase();
+
     print("The value of the cityName.value is $cityName");
     print("The location is got $placemarks");
-    hasLocalData.value = await appSharedPreference.hasCityName();
+    hasLocalData.value = await appSharedPreference.hasWeatherData();
     if (networkController.internetAvailable.value) {
       fetchData();
+      cityName.value = placemarks[0].locality.toString().toLowerCase();
+      appSharedPreference.saveCityName(cityNameValue: cityName.value);
     } else {
       if (hasLocalData.value) {
         noDataFound.value = false;
+        setLocalUI();
       } else {
         noDataFound.value = true;
       }
     }
+    update();
+  }
 
+  setLocalUI() async {
+
+    final now = DateTime.now();
+    final currentHour = now.hour;
+    final todayDate = DateTime.now().toIso8601String().split('T')[0];
+    isLoading.value = true;
+    cityName.value = await appSharedPreference.getCityName() ?? "";
+
+    var value = await appSharedPreference.getWeatherData() ?? "";
+
+    var decodeData = json.decode(value);
+    
+    weatherDataModel = WeatherDataModel.fromJson(decodeData);
+    
+    currentDay =
+        weatherDataModel?.days?.firstWhere((day) => day.datetime == todayDate);
+    daysList.clear();
+    daysList.addAll(weatherDataModel?.days?.where((day) {
+      final dayDate =
+      DateTime.parse(day.datetime); // Parse the day datetime
+      final difference = dayDate
+          .difference(now)
+          .inDays; // Calculate the difference in days
+      return difference >= 0 &&
+          difference < 6; // Include today and the next 6 days
+    }).toList() ?? []);
+    afterCurrentHours.clear();
+    afterCurrentHours.addAll(currentDay?.hours?.where((hour) {
+      final hourTime = int.parse(hour.datetime.split(':')[0]);
+      return hourTime >=
+          currentHour; // Include hours from the current hour onward
+    }).toList() ??
+        []);
+
+    print('Today\'s afterCurrentHours are: ${afterCurrentHours.first}');
+    if (currentDay != null) {
+      // Get the temperature for today
+      todayTemp.value = currentDay?.temp.floor().toString() ?? "";
+      print('Today\'s Temp: $todayTemp');
+    }
+    isLoading.value = false;
     update();
   }
 
   fetchData() async {
     isLoading.value = true;
     weatherDataModel = await getWeatherData();
+
     final now = DateTime.now();
     final currentHour = now.hour;
 
@@ -112,7 +175,6 @@ class HomePageController extends GetxController {
       todayTemp.value = currentDay?.temp.floor().toString() ?? "";
       print('Today\'s Temp: $todayTemp');
     }
-
     isLoading.value = false;
     update();
   }
@@ -159,6 +221,7 @@ class HomePageController extends GetxController {
 
       if (response.statusCode == 200) {
         var data = response.data;
+        appSharedPreference.saveWeatherData(daysValue: data);
         WeatherDataModel values = WeatherDataModel.fromJson(data);
         noDataFound.value = false;
         return values;
@@ -169,14 +232,25 @@ class HomePageController extends GetxController {
   }
 
   degreeConvertor() {
-    if (degreeMeasurement.value == "toFahrenheit") {
-      degreeMeasurement.value = "toCelsius";
-      temperature.value = "us";
+    if (networkController.internetAvailable.value) {
+      if (degreeMeasurement.value == "toFahrenheit") {
+        degreeMeasurement.value = "toCelsius";
+        temperature.value = "us";
+      } else {
+        degreeMeasurement.value = "toFahrenheit";
+        temperature.value = "metric";
+      }
+      fetchData();
     } else {
-      degreeMeasurement.value = "toFahrenheit";
-      temperature.value = "metric";
+      Get.snackbar(
+        "ALERT!",
+        "PLEASE CONNECT TO THE INTERNET",
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: AppColors.blackColor.withAlpha(150),
+        colorText: AppColors.whiteColor,
+        duration: const Duration(days: 1),
+      );
     }
-    fetchData();
     update();
   }
 }

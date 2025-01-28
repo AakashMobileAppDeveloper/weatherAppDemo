@@ -1,19 +1,20 @@
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppSharedPreference {
 
   static String cityName = "/cityName";
-  static String degreeMeasurement = "/degreeMeasurement";
-  static String degreeValue = "/degreeValue";
+  static String totalDays = "/totalDays";
 
-  Future<bool> hasCityName() async {
+  Future<bool> hasWeatherData() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.containsKey(cityName);  // Returns true if the key exists
+    return prefs.containsKey(totalDays);  // Returns true if the key exists
   }
 
-  Future<void> saveCityName({required String bearerToken}) async {
+  Future<void> saveCityName({required String cityNameValue}) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(cityName, bearerToken);
+    await prefs.setString(cityName, cityNameValue);
   }
 
   /// Retrieve the token from SharedPreferences
@@ -22,25 +23,16 @@ class AppSharedPreference {
     return prefs.getString(cityName);
   }
 
-  Future<void> saveDegreeMeasurement({required String bearerToken}) async {
+  Future<void> saveWeatherData({required Map<String,dynamic> daysValue}) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(cityName, bearerToken);
+    var value = json.encode(daysValue);
+    await prefs.setString(totalDays, value);
   }
 
   /// Retrieve the token from SharedPreferences
-  Future<String?> getDegreeMeasurement() async {
+  Future<String?> getWeatherData() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(cityName);
+    return prefs.getString(totalDays);
   }
 
-  Future<void> saveDegreeValue({required String bearerToken}) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(cityName, bearerToken);
-  }
-
-  /// Retrieve the token from SharedPreferences
-  Future<String?> getDegreeValue() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(cityName);
-  }
 }

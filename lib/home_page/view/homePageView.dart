@@ -37,17 +37,84 @@ class HomePageView extends GetView<HomePageController> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        SizedBox(
-                          width: width / 2.2,
-                          child: Text(
-                            controller
-                                .capitalizeFirstLetter(controller.cityName.value),
-                            style: TextStyle(
-                              color: AppColors.whiteColor,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              decoration: TextDecoration.none,
-                            ),
+                        GestureDetector(
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text("Select an City"),
+                                  content: SizedBox(
+                                    width: double.maxFinite, // Ensures the dialog is scrollable
+                                    child: ListView.builder(
+                                      shrinkWrap: true, // Ensures it only takes as much space as needed
+                                      itemCount: controller.data.length,
+                                      itemBuilder: (context, index) {
+                                        return GestureDetector(
+                                          onTap: () {
+                                            Navigator.of(context).pop();
+                                            controller.cityName.value = controller.data[index];
+                                            controller.appSharedPreference.saveCityName(cityNameValue: controller.cityName.value);
+                                            Future.delayed(Duration(microseconds: 1500), () {
+                                              controller.fetchData();
+                                            });
+                                          },
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: AppColors.secondaryColor,
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
+                                              padding: const EdgeInsets.all(16.0),
+                                              child: Text(
+                                                controller
+                                                    .capitalizeFirstLetter(controller.data[index]),
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.of(context).pop(),
+                                      child: const Text("Close"),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.arrow_drop_down,
+                                color: AppColors.whiteColor,
+                              ),
+                              SizedBox(width: 5,),
+                              SizedBox(
+                                width: width / 2.5,
+                                child: Text(
+                                  controller
+                                      .capitalizeFirstLetter(controller.cityName.value),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: AppColors.whiteColor,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    decoration: TextDecoration.none,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         GestureDetector(
@@ -55,6 +122,7 @@ class HomePageView extends GetView<HomePageController> {
                             controller.degreeConvertor();
                           },
                           child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
                             children: [
                               Icon(
                                 Icons.compare_arrows_rounded,
@@ -217,7 +285,7 @@ class HomePageView extends GetView<HomePageController> {
                                           "${controller.daysList[index].conditions}",
                                           style: TextStyle(
                                             color: AppColors.whiteColor,
-                                            fontSize: 14,
+                                            fontSize: 13,
                                             fontWeight: FontWeight.w500,
                                             decoration: TextDecoration.none,
                                           ),
@@ -247,6 +315,40 @@ class HomePageView extends GetView<HomePageController> {
                   ),
                 ],
               ),
+            ),
+            Visibility(
+              visible: controller.noDataFound.value,
+                child: Container(
+                  height: height,
+                  width: width,
+                  color: AppColors.primaryColor,
+                  padding: EdgeInsets.symmetric(horizontal: 15),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.signal_wifi_connected_no_internet_4,
+                          color: AppColors.whiteColor,
+                          size: 75,
+                        ),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        Text(
+                          "Kindly Turn on Internet to get weather update.Since you are new to our app",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.whiteColor,
+                            decoration: TextDecoration.none,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
             ),
             Visibility(
               visible: controller.isLocationDenied.value,
@@ -339,45 +441,16 @@ class HomePageView extends GetView<HomePageController> {
             ),
             Visibility(
               visible: controller.isLoading.value,
-                child: Container(
-                  width: width,
-                  height: height,
-                  color: AppColors.blackColor.withAlpha(100),
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.whiteColor,
-                    ),
+              child: Container(
+                width: width,
+                height: height,
+                color: AppColors.blackColor.withAlpha(100),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.whiteColor,
                   ),
                 ),
-            ),
-            Visibility(
-              visible: controller.noDataFound.value,
-                child: Container(
-                  height: height,
-                  width: width,
-                  color: AppColors.primaryColor,
-                  padding: EdgeInsets.symmetric(horizontal: 15),
-                  child: Center(
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.signal_wifi_connected_no_internet_4,
-                          color: AppColors.whiteColor,
-                          size: 50,
-                        ),
-                        Text(
-                          "Kindly Turn on Internet to get weather update.Since you are new to our app",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.whiteColor,
-                            decoration: TextDecoration.none,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              ),
             ),
           ],
         ),

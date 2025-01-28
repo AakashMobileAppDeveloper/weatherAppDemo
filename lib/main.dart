@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:weather_demo_app/pages.dart';
 import 'package:weather_demo_app/utils/network_conectivity_helper.dart';
@@ -7,6 +8,12 @@ void main() {
   Get.put<CheckingInternetConnectivity>(
     CheckingInternetConnectivity(),
     permanent: true,
+  );
+  SystemChrome.setPreferredOrientations(
+    [
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.portraitUp,
+    ],
   );
   runApp(const MyApp());
 }
