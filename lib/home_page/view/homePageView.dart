@@ -150,7 +150,7 @@ class HomePageView extends GetView<HomePageController> {
                       children: [
                         Container(
                           margin: EdgeInsets.only(),
-                          height: height / 5,
+                          height: 175,
                           width: width,
                           padding: EdgeInsets.only(left: 20, right: 20),
                           child: Column(

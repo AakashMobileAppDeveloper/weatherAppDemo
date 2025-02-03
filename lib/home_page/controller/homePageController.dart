@@ -49,7 +49,6 @@ class HomePageController extends GetxController {
 
   getLocationPermission() async {
     PermissionStatus locationPermission = await Permission.location.status;
-
     if (locationPermission == PermissionStatus.denied ||
         locationPermission == PermissionStatus.permanentlyDenied) {
       locationPermission = await Permission.location.request();
@@ -77,8 +76,8 @@ class HomePageController extends GetxController {
     print("The value of the cityName.value is $cityName");
     print("The location is got $placemarks");
     hasLocalData.value = await appSharedPreference.hasWeatherData();
+    cityName.value = placemarks[0].locality.toString().toLowerCase();
     if (networkController.internetAvailable.value) {
-      cityName.value = placemarks[0].locality.toString().toLowerCase();
       fetchData();
       appSharedPreference.saveCityName(cityNameValue: cityName.value);
     } else {
